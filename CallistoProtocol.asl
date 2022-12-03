@@ -37,7 +37,7 @@ init
 
 startup
   {
-      vars.TimeOffset = -30.00;
+      vars.TimeOffset = 0.00;
 
 		if (timer.CurrentTimingMethod == TimingMethod.RealTime)
 // Asks user to change to game time if LiveSplit is currently set to Real Time.
@@ -101,7 +101,7 @@ split
     (old.mission.Contains("Escape")) && (current.mission.Contains("Habitat")) ||
     (old.mission.Contains("Habitat")) && (current.mission.Contains("Snowcat")) ||
     (old.mission.Contains("Snowcat")) && (current.mission.Contains("Hangar")) ||
-    (old.mission.Contains("Hangar")) && (current.mission.Contains("Tunnels")) ||
+    (old.mission.Contains("Europa_Tunnels_Persistent")) && (current.mission.Contains("Tunnels_Persistent")) ||
     (old.mission.Contains("Tunnels")) && (current.mission.Contains("Minetown")) ||
     (old.mission.Contains("Minetown")) && (current.mission.Contains("Tower")) ||
     (old.mission.Contains("Tower")) && (current.mission.Contains("Europa")) ||
