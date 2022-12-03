@@ -37,7 +37,7 @@ init
 
 startup
   {
-      vars.TimeOffset = 0.00;
+      vars.TimeOffset = -30.00;
 
 		if (timer.CurrentTimingMethod == TimingMethod.RealTime)
 // Asks user to change to game time if LiveSplit is currently set to Real Time.
