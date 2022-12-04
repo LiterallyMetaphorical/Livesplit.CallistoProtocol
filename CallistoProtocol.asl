@@ -1,6 +1,5 @@
 /*
 Scanning Best Practices:
-
 For isNotPlaying  : basically a bool - 0 in game and 1 on loading screen / main menu 
 */
 
@@ -37,7 +36,7 @@ init
 
 startup
   {
-      vars.TimeOffset = -30.00;
+      vars.TimeOffset = 0.00;
 
 		if (timer.CurrentTimingMethod == TimingMethod.RealTime)
 // Asks user to change to game time if LiveSplit is currently set to Real Time.
@@ -49,7 +48,7 @@ startup
             "LiveSplit | The Callisto Protocol",
             MessageBoxButtons.YesNo,MessageBoxIcon.Question
         );
-        
+
         if (timingMessage == DialogResult.Yes)
         {
             timer.CurrentTimingMethod = TimingMethod.GameTime;
@@ -91,7 +90,10 @@ print(current.mission.ToString());
 start
 {
     return
-    (old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak"));
+    // Start for Intro Skip
+    (old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak")) ||
+    // Start for New Game
+    (old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent"));
 }
 
 split 
@@ -101,7 +103,7 @@ split
     (old.mission.Contains("Escape")) && (current.mission.Contains("Habitat")) ||
     (old.mission.Contains("Habitat")) && (current.mission.Contains("Snowcat")) ||
     (old.mission.Contains("Snowcat")) && (current.mission.Contains("Hangar")) ||
-    (old.mission.Contains("Europa_Tunnels_Persistent")) && (current.mission.Contains("Tunnels_Persistent")) ||
+    (old.mission.Contains("Hangar")) && (current.mission.Contains("Tunnels")) ||
     (old.mission.Contains("Tunnels")) && (current.mission.Contains("Minetown")) ||
     (old.mission.Contains("Minetown")) && (current.mission.Contains("Tower")) ||
     (old.mission.Contains("Tower")) && (current.mission.Contains("Europa")) ||
