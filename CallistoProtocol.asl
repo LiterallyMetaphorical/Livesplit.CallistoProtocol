@@ -76,7 +76,7 @@ update
 {
 //DEBUG CODE 
 //print(current.isNotPlaying.ToString()); 
-print(current.mission.ToString());
+//print(current.mission.ToString());
 
         //Use cases for each version of the game listed in the State method
 		switch (version) 
