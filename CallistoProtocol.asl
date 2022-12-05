@@ -1,24 +1,28 @@
 /*
 Scanning Best Practices:
-For isNotPlaying  : basically a bool - 0 in game and 1 on loading screen / main menu 
+For isNotPlaying  : basically a bool - 0 in game and 1 on loading screen / main menu - BUGGY IN LOST
+isLoading options
+257 in game //  65537 loading
+1065353216 in game // 0 loading
+144 in game // 416 loading
 */
 
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.31320")
 {
-    int isNotPlaying  : 0x6181D08; 
+    int loading  : 0x6181D08; 
     string150 mission : 0x05FE53C0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;
 }
 
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
 {
-    int isNotPlaying  : 0x05FE37B0, 0x0, 0x290, 0xD70; 
+    int loading  : 0x0623E698, 0xC4; // always ends in C4
     string150 mission : 0x061668C8, 0x1C0, 0x30, 0x30, 0x0;
 }
 
 init
 {
     vars.setStartTime = false;
-    vars.isNotPlaying = false;
+    vars.loading = false;
 
     switch (modules.First().ModuleMemorySize) 
     {
@@ -75,14 +79,14 @@ gameTime
 update
 {
 //DEBUG CODE 
-//print(current.isNotPlaying.ToString()); 
+//print(current.loading.ToString()); 
 //print(current.mission.ToString());
 
         //Use cases for each version of the game listed in the State method
 		switch (version) 
 	{
 		case "Steam v1.31320": case "Steam v1.0.0.0":
-			vars.isNotPlaying = current.isNotPlaying == 1;
+			vars.loading = current.loading == 65537;
 			break;
 	}
 }
@@ -112,7 +116,7 @@ split
 
 isLoading
 {
-    return vars.isNotPlaying;
+    return vars.loading;
 }
 
 exit
