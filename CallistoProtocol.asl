@@ -40,7 +40,10 @@ init
 
 startup
   {
-      vars.TimeOffset = 0.00;
+    // Timing offset and flag
+    settings.Add("removeIntroTime", true, "Start timer at -30.00s. Enable this for No Intro runs");
+    vars.startTimeOffsetFlag = false;
+    vars.startTimeOffset = -30.00;
 
 		if (timer.CurrentTimingMethod == TimingMethod.RealTime)
 // Asks user to change to game time if LiveSplit is currently set to Real Time.
@@ -67,14 +70,14 @@ onStart
     timer.IsGameTimePaused = true;
 }
 
-gameTime 
+gameTime
 {
-    if(vars.setStartTime)
+    if(settings["removeIntroTime"] && vars.startTimeOffsetFlag) 
     {
-      vars.setStartTime = false;
-      return TimeSpan.FromSeconds(vars.TimeOffset);
+        vars.startTimeOffsetFlag = false;
+        return TimeSpan.FromSeconds(vars.startTimeOffset);
     }
-}  
+}
 
 update
 {
@@ -93,11 +96,19 @@ update
 
 start
 {
-    return
-    // Start for Intro Skip
-    (old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak")) ||
-    // Start for New Game
-    (old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent"));
+    // Run starts when leaving the first loadscreen
+    if
+    (
+        (old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak")) || 
+        (old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent"))
+    )    
+    {
+        // custom timing
+        if (settings["removeIntroTime"]) vars.startTimeOffsetFlag = true;
+        return true;
+    }
+
+    return false;
 }
 
 split 
