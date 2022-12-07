@@ -30,7 +30,7 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.1.0.0")
 {
     int loading  : 0x0623E6D8, 0xC4; // always ends in C4
-    string150 mission : 0x062FA888, 0x160, 0x30, 0x30, 0x0;
+    string150 mission : 0x0612B628, 0x20, 0x30, 0x30, 0x0;
 }
 
 init
@@ -100,7 +100,7 @@ update
 {
 //DEBUG CODE 
 //print(current.loading.ToString()); 
-//print(current.mission.ToString());
+print(current.mission.ToString());
 
         //Use cases for each version of the game listed in the State method
 		switch (version) 
