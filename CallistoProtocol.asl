@@ -100,8 +100,7 @@ update
 {
 //DEBUG CODE 
 //print(current.loading.ToString()); 
-
-print(current.mission.ToString());
+//print(current.mission.ToString());
 
         //Use cases for each version of the game listed in the State method
 		switch (version) 
@@ -115,10 +114,19 @@ print(current.mission.ToString());
 start
 {
     // Run starts when leaving the first loadscreen
+    
+    if (current.mission == null) 
+    {return false;}
+
     if
     (
-        (old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak")) || 
-        (old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent"))
+        //works on fresh boot of game when pointer has not been initialized yet
+        (old.mission == null && (current.mission.Contains("Outbreak"))) || 
+        (old.mission == null && (current.mission.Contains("Europa_ColdOpen_Persistent"))) ||
+
+        //works after pointer is initialized by loading a map
+        ((old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak"))) || 
+        ((old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent")))
     )  
     {
         // custom timing
