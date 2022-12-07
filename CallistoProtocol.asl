@@ -1,10 +1,18 @@
 /*
 Scanning Best Practices:
-For isNotPlaying  : basically a bool - 0 in game and 1 on loading screen / main menu - BUGGY IN LOST
+
 isLoading options
-257 in game //  65537 loading
-1065353216 in game // 0 loading
-144 in game // 416 loading
+search for 257 in game, 65537 while loading, and then 257 in game again (in a different level)
+
+last pointer offset is 0xc4
+pointer should be around 06 region of memory
+
+
+For mission
+
+use the pinned message in #resource-dev to search for the associated loaded mission. I suggest using Habitat/Outbreak/Tower as they are named the same in game and memory (easier)
+
+when address is found, search for a pointer with last offsets of 0x30, 0x30, 0x0. Final pointer should be in the 06 region.
 */
 
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.31320")
@@ -19,6 +27,12 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
     string150 mission : 0x061668C8, 0x1C0, 0x30, 0x30, 0x0;
 }
 
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.1.0.0")
+{
+    int loading  : 0x0623E6D8, 0xC4; // always ends in C4
+    string150 mission : 0x062FA888, 0x160, 0x30, 0x30, 0x0;
+}
+
 init
 {
     vars.setStartTime = false;
@@ -31,6 +45,9 @@ init
             break;
         case 385458176 : 
             version = "Steam v1.0.0.0";
+            break;
+        case 382361600 : 
+            version = "Steam v1.1.0.0";
             break;
     default:
         print("Unknown version detected");
@@ -83,12 +100,13 @@ update
 {
 //DEBUG CODE 
 //print(current.loading.ToString()); 
-//print(current.mission.ToString());
+
+print(current.mission.ToString());
 
         //Use cases for each version of the game listed in the State method
 		switch (version) 
 	{
-		case "Steam v1.31320": case "Steam v1.0.0.0":
+		case "Steam v1.31320": case "Steam v1.0.0.0": case "Steam v1.1.0.0":
 			vars.loading = current.loading == 65537;
 			break;
 	}
@@ -101,7 +119,7 @@ start
     (
         (old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak")) || 
         (old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent"))
-    )    
+    )  
     {
         // custom timing
         if (settings["removeIntroTime"]) vars.startTimeOffsetFlag = true;
