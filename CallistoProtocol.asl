@@ -159,7 +159,7 @@ split
 
 isLoading
 {
-    return current.loading == 65537 || current.pauseStatus == 1;
+    return current.loading == 65537 || current.pauseStatus == 1 || current.mission.Contains("MainMenu");
 }
 exit
 {
