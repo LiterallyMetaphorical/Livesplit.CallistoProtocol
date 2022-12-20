@@ -37,7 +37,7 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.2.0.0")
 {
     int loading       : 0x06241798, 0xC4; 
     byte pauseStatus  : 0x06181BB0, 0x8C8;
-    string150 mission : 0x062DC238, 0x118, 0xB30, 0x0;
+    string150 mission : 0x06181BB0, 0xC58, 0x0, 0x30, 0x0;
 }
 
 init
