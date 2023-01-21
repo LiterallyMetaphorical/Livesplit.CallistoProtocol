@@ -26,7 +26,7 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
     int loading       : 0x0623E698, 0xC4; 
     string150 mission : 0x061668C8, 0x1C0, 0x30, 0x30, 0x0;
 }
-
+    
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.1.0.0")
 {
     int loading       : 0x0623E6D8, 0xC4; 
@@ -38,6 +38,13 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.2.0.0")
     int loading       : 0x06241798, 0xC4; 
     byte pauseStatus  : 0x06181BB0, 0x8C8;
     string150 mission : 0x06181BB0, 0xC58, 0x0, 0x30, 0x0;
+}
+
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.3.0.0")
+{
+    int loading       : 0x062649F8, 0xC4; 
+    int pauseStatus   : 0x6265A08;
+    string150 mission : 0x061A4A30, 0xC58, 0x0, 0x30, 0x0;
 }
 
 init
@@ -55,6 +62,9 @@ switch (modules.First().ModuleMemorySize)
             break;
         case 366514176 : 
             version = "Steam v1.2.0.0";
+            break;
+        case 366084096 : 
+            version = "Steam v1.3.0.0";
             break;
 
     default:
@@ -108,13 +118,6 @@ update
 //DEBUG CODE 
 //print(current.loading.ToString()); 
 //print(current.mission.ToString());
-
-        //Use cases for each version of the game listed in the State method
-		switch (version) 
-	{
-		case "Steam v1.31320": case "Steam v1.0.0.0": case "Steam v1.1.0.0":
-			break;
-	}
 }
 
 start
