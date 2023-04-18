@@ -47,6 +47,13 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.3.0.0")
     string150 mission : 0x061A4A30, 0xC58, 0x0, 0x30, 0x0;
 }
 
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.8.0.0")
+{
+    int loading       : 0x062ADF28, 0xC4; 
+    int pauseStatus   : 0x62B1F38;
+    string150 mission : 0x06F6CE70, 0x90, 0x120, 0x5B0, 0x0;
+}
+
 init
 {
 switch (modules.First().ModuleMemorySize) 
@@ -66,7 +73,9 @@ switch (modules.First().ModuleMemorySize)
         case 366084096 : 
             version = "Steam v1.3.0.0";
             break;
-
+        case 374734848 : 
+            version = "Steam v1.8.0.0";
+            break;
     default:
         print("Unknown version detected");
         return false;
@@ -117,7 +126,9 @@ update
 {
 //DEBUG CODE 
 //print(current.loading.ToString()); 
+//print(current.pauseStatus.ToString()); 
 //print(current.mission.ToString());
+//print(modules.First().ModuleMemorySize.ToString());
 }
 
 start
@@ -130,12 +141,12 @@ start
     if
     (
         //works on fresh boot of game when pointer has not been initialized yet
-        (old.mission == null && (current.mission.Contains("Outbreak"))) || 
-        (old.mission == null && (current.mission.Contains("Europa_ColdOpen_Persistent"))) ||
+        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent ") || 
+        (old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
         //works after pointer is initialized by loading a map
-        ((old.mission.Contains("MainMenu")) && (current.mission.Contains("Outbreak"))) || 
-        ((old.mission.Contains("MainMenu")) && (current.mission.Contains("Europa_ColdOpen_Persistent")))
+        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent ") || 
+        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent")
     )  
     {
         // custom timing
@@ -149,20 +160,20 @@ start
 split 
 { 	
     return
-    (old.mission.Contains("Outbreak")) && (current.mission.Contains("Escape")) ||
-    (old.mission.Contains("Escape")) && (current.mission.Contains("Habitat")) ||
-    (old.mission.Contains("Habitat")) && (current.mission.Contains("Snowcat")) ||
-    (old.mission.Contains("Snowcat")) && (current.mission.Contains("Hangar")) ||
-    (old.mission.Contains("Hangar")) && (current.mission.Contains("Tunnels")) ||
-    (old.mission.Contains("Tunnels")) && (current.mission.Contains("Minetown")) ||
-    (old.mission.Contains("Minetown")) && (current.mission.Contains("Tower")) ||
-    (old.mission.Contains("Tower")) && (current.mission.Contains("Europa")) ||
-    (old.mission.Contains("Europa")) && (current.mission.Contains("Tower"));
+    old.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent" && current.mission == "/Game/Maps/Game/Escape/Escape_Persistent" ||
+    old.mission == "/Game/Maps/Game/Escape/Escape_Persistent" && current.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" ||
+    old.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" && current.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" ||
+    old.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" && current.mission == "/Game/Maps/Game/Hangar/Hangar_Persistent" ||
+    old.mission == "/Game/Maps/Game/Hangar/Hangar_Persistent" && current.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" ||
+    old.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" && current.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" ||
+    old.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent" ||
+    old.mission == "/Game/Maps/Game/Tower/Tower_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_Persistent" ||
+    old.mission == "/Game/Maps/Game/Europa/Europa_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent";
 }	
 
 isLoading
 {
-    return current.loading == 65537 || current.pauseStatus == 1 || current.mission.Contains("MainMenu");
+    return current.loading == 65537 || current.pauseStatus == 1 || current.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent";
 }
 exit
 {
