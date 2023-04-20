@@ -145,7 +145,7 @@ start
         (old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
         //works after pointer is initialized by loading a map
-        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent ") || 
+        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
         (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent")
     )  
     {
