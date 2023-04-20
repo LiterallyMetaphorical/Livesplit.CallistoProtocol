@@ -141,7 +141,7 @@ start
     if
     (
         //works on fresh boot of game when pointer has not been initialized yet
-        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent ") || 
+        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
         (old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
         //works after pointer is initialized by loading a map
