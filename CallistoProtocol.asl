@@ -160,15 +160,15 @@ start
 split 
 { 	
     return
-    old.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent" && current.mission == "/Game/Maps/Game/Escape/Escape_Persistent" ||
-    old.mission == "/Game/Maps/Game/Escape/Escape_Persistent" && current.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" ||
-    old.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" && current.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" ||
-    old.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" && current.mission == "/Game/Maps/Game/Hangar/Hangar_Persistent" ||
-    old.mission == "/Game/Maps/Game/Hangar/Hangar_Persistent" && current.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" ||
-    old.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" && current.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" ||
-    old.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent" ||
-    old.mission == "/Game/Maps/Game/Tower/Tower_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_Persistent" ||
-    old.mission == "/Game/Maps/Game/Europa/Europa_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent";
+    old.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent" && current.mission == "/Game/Maps/Game/Escape/Escape_Persistent" || /* Outbreak - Aftermath */
+    old.mission == "/Game/Maps/Game/Escape/Escape_Persistent" && current.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" || /* Aftermath - Habitat */
+    old.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" && current.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" || /* Habitat - Lost 1 */
+    old.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" && current.mission == "/Game/Maps/Game/Hangar/Hangar_Persistent" || /* Lost 1 - Lost 2 */
+    old.mission == "/Game/Maps/Game/Europa/Europa_Tunnels_Persistent" && current.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" || /* Technically Lost 3 - Below. Speedrunners dont make a split for Lost 3 tho cause its short */
+    old.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" && current.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" || /* Below - Colony */
+    old.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent" || /* Colony - Tower 1 */
+    old.mission == "/Game/Maps/Game/Tower/Tower_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_Persistent" || /* Tower 1 - Tower 2 */
+    old.mission == "/Game/Maps/Game/Europa/Europa_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent"; /* Tower 2 - Tower 3 */
 }	
 
 isLoading
