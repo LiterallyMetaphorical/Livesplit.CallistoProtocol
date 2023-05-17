@@ -54,6 +54,13 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.8.0.0")
     string150 mission : 0x06056DE0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;
 }
 
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.9.0.0")
+{
+    int loading       : 0x062ADF28, 0xC4; 
+    int pauseStatus   : 0x62B1F38;
+    string150 mission : 0x05F43FA8, 0x60, 0x30, 0x30, 0x0;
+}
+
 init
 {
 switch (modules.First().ModuleMemorySize) 
@@ -76,6 +83,11 @@ switch (modules.First().ModuleMemorySize)
         case 374734848 : 
             version = "Steam v1.8.0.0";
             break;
+        case 375881728 :
+            version = "Steam v1.9.0.0"; // just made this number up tbh
+            break;
+        
+
     default:
         print("Unknown version detected");
         return false;
@@ -122,15 +134,6 @@ gameTime
     }
 }
 
-update
-{
-//DEBUG CODE 
-//print(current.loading.ToString()); 
-//print(current.pauseStatus.ToString()); 
-//print(current.mission.ToString());
-//print(modules.First().ModuleMemorySize.ToString());
-}
-
 start
 {
     // Run starts when leaving the first loadscreen
@@ -141,7 +144,7 @@ start
     if
     (
         //works on fresh boot of game when pointer has not been initialized yet
-        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
+        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent ") || 
         (old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
         //works after pointer is initialized by loading a map
@@ -175,7 +178,17 @@ isLoading
 {
     return current.loading == 65537 || current.pauseStatus == 1 || current.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent";
 }
+
 exit
 {
 	timer.IsGameTimePaused = true;
+}
+
+update
+{
+//DEBUG CODE 
+//print(current.loading.ToString()); 
+//print(current.pauseStatus.ToString()); 
+//print("Current Mission is " + current.mission.ToString());
+//print(modules.First().ModuleMemorySize.ToString());
 }
