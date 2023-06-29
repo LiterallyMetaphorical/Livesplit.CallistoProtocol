@@ -18,7 +18,7 @@ when address is found, search for a pointer with last offsets of 0x0. Final poin
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.31320")
 {
     int loading       : 0x6181D08; 
-    string150 mission : 0x05FE53C0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;
+    string150 mission : 0x05FE53C0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;25
 }
 
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
@@ -60,6 +60,12 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.9.0.0")
     int pauseStatus   : 0x62B1F38;
     string150 mission : 0x05F43FA8, 0x60, 0x30, 0x30, 0x0;
 }
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.12")
+{
+    int loading       : 0x063165C8, 0xC4; 
+    int pauseStatus   : 0x631A5E8;
+    string150 mission : 0x06014580, 0xD70, 0x30, 0x30, 0x0;
+}
 
 init
 {
@@ -86,7 +92,9 @@ switch (modules.First().ModuleMemorySize)
         case 375881728 :
             version = "Steam v1.9.0.0"; // just made this number up tbh
             break;
-        
+        case 374194176 :
+            version = "Steam v1.12"; // just made this number up tbh
+            break;
 
     default:
         print("Unknown version detected");
@@ -144,12 +152,16 @@ start
     if
     (
         //works on fresh boot of game when pointer has not been initialized yet
-        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent ") || 
+        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
         (old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
         //works after pointer is initialized by loading a map
         (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
         (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent")
+
+        //DLC autostart including fresh boot and also with pointer initialized
+        (old.mission == null && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
+        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/DLC4/Maps/DLC4_Persistent")
     )  
     {
         // custom timing
