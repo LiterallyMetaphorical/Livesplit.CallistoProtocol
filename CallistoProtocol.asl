@@ -18,7 +18,7 @@ when address is found, search for a pointer with last offsets of 0x0. Final poin
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.31320")
 {
     int loading       : 0x6181D08; 
-    string150 mission : 0x05FE53C0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;25
+    string150 mission : 0x05FE53C0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;
 }
 
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
