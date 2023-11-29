@@ -67,6 +67,14 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.12")
     string150 mission : 0x06014580, 0xD70, 0x30, 0x30, 0x0;
 }
 
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.14")
+{
+    int loading       : 0x06317658, 0xC4; 
+    //int pauseStatus   : 0x631A5E8;
+    string150 mission : 0x06205A00, 0x20, 0x30, 0x30, 0x0;
+    int pauseStatus   : 0x060BD3C8, 0x48, 0x40, 0x168, 0x1E0;
+}
+
 init
 {
 switch (modules.First().ModuleMemorySize) 
@@ -93,9 +101,11 @@ switch (modules.First().ModuleMemorySize)
             version = "Steam v1.9.0.0"; // just made this number up tbh
             break;
         case 374194176 :
-            version = "Steam v1.12"; // just made this number up tbh
+            version = "Steam v1.12";
             break;
-
+        case 359608320 :
+            version = "Steam v1.14";
+            break;
     default:
         print("Unknown version detected");
         return false;
@@ -142,6 +152,7 @@ gameTime
     }
 }
 
+/*
 start
 {
     // Run starts when leaving the first loadscreen
@@ -171,6 +182,7 @@ start
 
     return false;
 }
+*/
 
 split 
 { 	
