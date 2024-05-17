@@ -70,7 +70,6 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.12")
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.14")
 {
     int loading       : 0x06317658, 0xC4; 
-    //int pauseStatus   : 0x631A5E8;
     string150 mission : 0x06205A00, 0x20, 0x30, 0x30, 0x0;
     int pauseStatus   : 0x060BD3C8, 0x48, 0x40, 0x168, 0x1E0;
 }
@@ -78,8 +77,7 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.14")
 state("TheCallistoProtocol-Win64-Shipping", "Steam v1.16")
 {
     int loading       : 0x06317658, 0xC4; 
-    //int pauseStatus   : 0x631A5E8;
-    string150 mission : 0x061BA528, 0x208, 0x870, 0x0;
+    string150 mission : 0x06015580, 0xBD0, 0x30, 0x0;
     int pauseStatus   : 0x631B678;
 }
 
