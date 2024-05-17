@@ -75,6 +75,14 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.14")
     int pauseStatus   : 0x060BD3C8, 0x48, 0x40, 0x168, 0x1E0;
 }
 
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.16")
+{
+    int loading       : 0x06317658, 0xC4; 
+    //int pauseStatus   : 0x631A5E8;
+    string150 mission : 0x061BA528, 0x208, 0x870, 0x0;
+    int pauseStatus   : 0x631B678;
+}
+
 init
 {
 switch (modules.First().ModuleMemorySize) 
@@ -105,6 +113,9 @@ switch (modules.First().ModuleMemorySize)
             break;
         case 359608320 :
             version = "Steam v1.14";
+            break;
+        case 114765824 :
+            version = "Steam v1.16";
             break;
     default:
         print("Unknown version detected");
