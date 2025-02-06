@@ -81,6 +81,14 @@ state("TheCallistoProtocol-Win64-Shipping", "Steam v1.16")
     int pauseStatus   : 0x631B678;
 }
 
+state("TheCallistoProtocol-Win64-Shipping", "Steam v1.19")
+{
+    int loading           : 0x06E74440, 0xC4; 
+    string150 mission     : 0x0660C100, 0xBD0, 0x30, 0x0;
+    int pauseStatus       : 0x6E82DE0;
+    int playerLostControl : 0x06879A40, 0x138;
+}
+
 init
 {
 switch (modules.First().ModuleMemorySize) 
@@ -115,16 +123,19 @@ switch (modules.First().ModuleMemorySize)
         case 114765824 :
             version = "Steam v1.16";
             break;
+        case 123359232 :
+            version = "Steam v1.19";
+            break;
     default:
         print("Unknown version detected");
         return false;
     }
 }
 
+
 startup
   {
     // Timing offset and flag
-    settings.Add("removeIntroTime", true, "Start timer at -30.00s. Enable this for No Intro runs");
     vars.startTimeOffsetFlag = false;
     vars.startTimeOffset = -30.00;
 
@@ -144,6 +155,65 @@ startup
             timer.CurrentTimingMethod = TimingMethod.GameTime;
         }
     }
+
+    //creates text components for variable information
+	vars.SetTextComponent = (Action<string, string>)((id, text) =>
+	{
+	        var textSettings = timer.Layout.Components.Where(x => x.GetType().Name == "TextComponent").Select(x => x.GetType().GetProperty("Settings").GetValue(x, null));
+	        var textSetting = textSettings.FirstOrDefault(x => (x.GetType().GetProperty("Text1").GetValue(x, null) as string) == id);
+	        if (textSetting == null)
+	        {
+	        var textComponentAssembly = Assembly.LoadFrom("Components\\LiveSplit.Text.dll");
+	        var textComponent = Activator.CreateInstance(textComponentAssembly.GetType("LiveSplit.UI.Components.TextComponent"), timer);
+	        timer.Layout.LayoutComponents.Add(new LiveSplit.UI.Components.LayoutComponent("LiveSplit.Text.dll", textComponent as LiveSplit.UI.Components.IComponent));
+	
+	        textSetting = textComponent.GetType().GetProperty("Settings", BindingFlags.Instance | BindingFlags.Public).GetValue(textComponent, null);
+	        textSetting.GetType().GetProperty("Text1").SetValue(textSetting, id);
+	        }
+	
+	        if (textSetting != null)
+	        textSetting.GetType().GetProperty("Text2").SetValue(textSetting, text);
+    });
+
+    //Start Option Settings
+        //Parent setting
+	    settings.Add("Autostart Options", true, "Autostart Options [Select only ONE]");
+	    //Child settings that will sit beneath Parent setting
+        settings.Add("NoCS Autostart", false, "Autostart for versions WITHOUT Cutscene Skips", "Autostart Options");
+        settings.Add("removeIntroTime", false, "Start timer at -30.00s. [No Intro, Pre-Cutscene Skip Patch Runs Only]", "Autostart Options");
+        settings.Add("Blank Space", false, "______________DIVIDER - NOT A REAL OPTION_____________________________________________________________________________________________", "Autostart Options");
+        settings.Add("wCS Autostart", true, "Autostart for versions WITH Cutscene Skips", "Autostart Options");
+        
+
+    //Variable Information Settings
+        //Parent setting
+	    settings.Add("Variable Information", true, "Variable Information");
+	    //Child settings that will sit beneath Parent setting
+        settings.Add("Current Mission", true, "Current Mission", "Variable Information");
+        settings.Add("Current Loading", false, "Current Loading", "Variable Information");
+        settings.Add("Current playerLostControl", false, "Current playerLostControl", "Variable Information");
+        settings.Add("Current isPaused", false, "Current isPaused", "Variable Information");
+}
+
+update
+{
+    //cutting the first 16 characters off the string value for a prettier name to work with
+    current.missionPretty = current.mission.ToString().Substring(16);
+
+    //Prints room iD
+    if(settings["Current Loading"]){vars.SetTextComponent("Loading Value: ",current.loading.ToString());}
+    //Prints mission
+    if(settings["Current Mission"]){vars.SetTextComponent("Map: ",current.missionPretty.ToString());}
+    //Prints isPaused
+    if(settings["Current isPaused"]){vars.SetTextComponent("Paused Value: ",current.pauseStatus.ToString());}
+    //Prints playerLostControl
+    if(settings["Current playerLostControl"]){vars.SetTextComponent("Player Lost Control? : ",current.playerLostControl.ToString());}
+
+//DEBUG CODE 
+//print(current.loading.ToString()); 
+//print(current.pauseStatus.ToString()); 
+//print("Current Mission is " + current.mission.ToString());
+//print(modules.First().ModuleMemorySize.ToString());
 }
 
 onStart
@@ -161,7 +231,7 @@ gameTime
     }
 }
 
-/*
+
 start
 {
     // Run starts when leaving the first loadscreen
@@ -169,20 +239,28 @@ start
     if (current.mission == null) 
     {return false;}
 
-    if
-    (
-        //works on fresh boot of game when pointer has not been initialized yet
-        (old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
-        (old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
+    if  (
+        // For versions of the game without cutscene skips
+            //works on fresh boot of game when pointer has not been initialized yet
+            (settings["NoCS Autostart"] && old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
+            (settings["NoCS Autostart"] && old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
-        //works after pointer is initialized by loading a map
-        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
-        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent")
+            //works after pointer is initialized by loading a map
+            (settings["NoCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
+            (settings["NoCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
 
-        //DLC autostart including fresh boot and also with pointer initialized
-        (old.mission == null && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
-        (old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/DLC4/Maps/DLC4_Persistent")
-    )  
+            //DLC autostart including fresh boot and also with pointer initialized
+            (settings["NoCS Autostart"] && old.mission == null && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
+            (settings["NoCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
+
+        // For versions of the game with cutscene skips
+            //works on fresh boot of game when pointer has not been initialized yet
+            (settings["wCS Autostart"] && old.playerLostControl == 1 && current.playerLostControl == 0 && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
+
+            //DLC autostart including fresh boot and also with pointer initialized
+            (settings["wCS Autostart"] && old.mission == null && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
+            (settings["wCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/DLC4/Maps/DLC4_Persistent")
+        )  
     {
         // custom timing
         if (settings["removeIntroTime"]) vars.startTimeOffsetFlag = true;
@@ -191,7 +269,7 @@ start
 
     return false;
 }
-*/
+
 
 split 
 { 	
@@ -215,13 +293,4 @@ isLoading
 exit
 {
 	timer.IsGameTimePaused = true;
-}
-
-update
-{
-//DEBUG CODE 
-//print(current.loading.ToString()); 
-//print(current.pauseStatus.ToString()); 
-//print("Current Mission is " + current.mission.ToString());
-//print(modules.First().ModuleMemorySize.ToString());
 }
