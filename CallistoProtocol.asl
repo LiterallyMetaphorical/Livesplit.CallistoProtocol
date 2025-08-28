@@ -25,8 +25,13 @@
 			{ "DLC4_Persistent",             true, "Final Transmission","Chapter Splits" },
 		{"GameInfo", 					true, "Print various Game Info to LiveSplit layout",	null},
 			{"Mission",                 true, "Current Mission",                                "GameInfo"},
+			{"playerPos",               true, "Current Player Position",                        "GameInfo"},
 			{"timePause",               false, "Current Loading + Current Pause Status",        "GameInfo"},
 			{"camTarget",               false, "Current Camera Target",         				"GameInfo"},
+		{"PlayerVelDisplay", 			true, "Print various Game Info to LiveSplit layout",	null},
+			{"playerVel", true, "Current Player Velocity XYZ Combined & Simplified","PlayerVelDisplay"},
+			{"playerVelCombinedRaw",    false, "Current Player Velocity XYZ Combined Raw",       "PlayerVelDisplay"},
+			{"playerVelTrueRaw",    	false, "Current Player Velocity XYZ Combined Raw",       "PlayerVelDisplay"},
 		{"Debug", 					    false, "Print various Game Info to LiveSplit layout",    null},
 			{"playerLostControl",       true, "Current playerLostControl",                      "Debug"},
 			{"TransitionType",       	true, "Current Transition Type",                      	"Debug"},
@@ -130,6 +135,15 @@
 		vars.Helper["playerLostControl"]  = vars.Helper.Make<int>(plcBase, 0x138);
 		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> PlayerCameraManager(2B8) -> ViewTarget.Target(320)
 		vars.Helper["camTargetName"]  = vars.Helper.Make<ulong>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x2B8, 0xF90, 0x18);
+		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> Character(260) -> CapsuleComponent(290) -> RelativeLocation(11C)
+    	vars.Helper["playerPos"] = vars.Helper.Make<Vector3f>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x290, 0x11C);
+		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> Character(260) -> CharacterMovement(288) -> Velocity(0C4)
+    	vars.Helper["playerVelVector"] = vars.Helper.Make<Vector3f>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0C4);
+		vars.Helper["playerVelX"] = vars.Helper.Make<float>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0C4);
+		vars.Helper["playerVelY"] = vars.Helper.Make<float>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0C8);
+		vars.Helper["playerVelZ"] = vars.Helper.Make<float>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0CC);
+
+		// ??? -> PhxProgressManager(???) -> CurrentCheckpoint (440) -> CheckpointId maybe? (298 - FName)
 
 		
 
@@ -139,6 +153,8 @@
 		current.playerCameraName = "Waiting for Player Camera...";
 		current.playerCameraActive = false;
 		current.loading = 0;
+		current.playerVelRaw = 0;
+		current.playerVelDisplay = 0;
 	}
 
 	update
@@ -164,6 +180,9 @@
 		if (current.camTarget == current.playerCameraName)
 			{ current.playerCameraActive = true; }
 
+		current.playerVelRaw = (float)System.Math.Sqrt(current.playerVelX*current.playerVelX + current.playerVelY*current.playerVelY + current.playerVelZ*current.playerVelZ / 10f);
+		current.playerVelDisplay = (int)(current.playerVelRaw / 10f);
+
 		vars.SetTextIfEnabled("Mission",current.World);
 		vars.SetTextIfEnabled("camTarget",current.camTarget);
 		vars.SetTextIfEnabled("timePause","Loading = " + current.loading + " & " + "Pause Status = " + current.TransitionType);
@@ -171,6 +190,10 @@
 		vars.SetTextIfEnabled("TransitionType",current.TransitionType);
 		vars.SetTextIfEnabled("playerCameraActive",current.playerCameraActive);
 		vars.SetTextIfEnabled("playerCameraName",current.playerCameraName);
+		vars.SetTextIfEnabled("playerPos",current.playerPos);
+		vars.SetTextIfEnabled("playerVel",current.playerVelDisplay);
+		vars.SetTextIfEnabled("playerVelCombinedRaw",current.playerVelRaw);
+		vars.SetTextIfEnabled("playerVelTrueRaw", current.playerVelVector);
 	}
 
 	isLoading
