@@ -1,296 +1,252 @@
-/*
-Scanning Best Practices:
+	state("TheCallistoProtocol-Win64-Shipping") {}
 
-isLoading options
-search for 257 in game, 65537 while loading, and then 257 in game again (in a different level)
-
-last pointer offset is 0xC4
-pointer should be around 06 region of memory
-
-
-For mission
-
-use the pinned message in #resource-dev to search for the associated loaded mission. I suggest using Habitat/Outbreak/Tower as they are named the same in game and memory (easier)
-
-when address is found, search for a pointer with last offsets of 0x0. Final pointer should be in the 06 region.
-*/
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.31320")
-{
-    int loading       : 0x6181D08; 
-    string150 mission : 0x05FE53C0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.0.0.0")
-{
-    int loading       : 0x0623E698, 0xC4; 
-    string150 mission : 0x061668C8, 0x1C0, 0x30, 0x30, 0x0;
-}
-    
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.1.0.0")
-{
-    int loading       : 0x0623E6D8, 0xC4; 
-    string150 mission : 0x0612B628, 0x20, 0x30, 0x30, 0x0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.2.0.0")
-{
-    int loading       : 0x06241798, 0xC4; 
-    byte pauseStatus  : 0x06181BB0, 0x8C8;
-    string150 mission : 0x06181BB0, 0xC58, 0x0, 0x30, 0x0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.3.0.0")
-{
-    int loading       : 0x062649F8, 0xC4; 
-    int pauseStatus   : 0x6265A08;
-    string150 mission : 0x061A4A30, 0xC58, 0x0, 0x30, 0x0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.8.0.0")
-{
-    int loading       : 0x062ADF28, 0xC4; 
-    int pauseStatus   : 0x62B1F38;
-    string150 mission : 0x06056DE0, 0x188, 0x78, 0x20, 0x20, 0x30, 0x30, 0x0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.9.0.0")
-{
-    int loading       : 0x062ADF28, 0xC4; 
-    int pauseStatus   : 0x62B1F38;
-    string150 mission : 0x05F43FA8, 0x60, 0x30, 0x30, 0x0;
-}
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.12")
-{
-    int loading       : 0x063165C8, 0xC4; 
-    int pauseStatus   : 0x631A5E8;
-    string150 mission : 0x06014580, 0xD70, 0x30, 0x30, 0x0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.14")
-{
-    int loading       : 0x06317658, 0xC4; 
-    string150 mission : 0x06205A00, 0x20, 0x30, 0x30, 0x0;
-    int pauseStatus   : 0x060BD3C8, 0x48, 0x40, 0x168, 0x1E0;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.16")
-{
-    int loading       : 0x06317658, 0xC4; 
-    string150 mission : 0x06015580, 0xBD0, 0x30, 0x0;
-    int pauseStatus   : 0x631B678;
-}
-
-state("TheCallistoProtocol-Win64-Shipping", "Steam v1.19")
-{
-    int loading           : 0x06E74440, 0xC4; 
-    string150 mission     : 0x0660C100, 0xBD0, 0x30, 0x0;
-    int pauseStatus       : 0x6E82DE0;
-    int playerLostControl : 0x06879A40, 0x138;
-}
-
-init
-{
-switch (modules.First().ModuleMemorySize) 
-    {
-        case 372211712: 
-            version = "Steam v1.31320";
-            break;
-        case 385458176 : 
-            version = "Steam v1.0.0.0";
-            break;
-        case 382361600 : 
-            version = "Steam v1.1.0.0";
-            break;
-        case 366514176 : 
-            version = "Steam v1.2.0.0";
-            break;
-        case 366084096 : 
-            version = "Steam v1.3.0.0";
-            break;
-        case 374734848 : 
-            version = "Steam v1.8.0.0";
-            break;
-        case 375881728 :
-            version = "Steam v1.9.0.0"; // just made this number up tbh
-            break;
-        case 374194176 :
-            version = "Steam v1.12";
-            break;
-        case 359608320 :
-            version = "Steam v1.14";
-            break;
-        case 114765824 :
-            version = "Steam v1.16";
-            break;
-        case 123359232 :
-            version = "Steam v1.19";
-            break;
-    default:
-        print("Unknown version detected");
-        return false;
-    }
-}
-
-
-startup
-  {
-    // Timing offset and flag
-    vars.startTimeOffsetFlag = false;
-    vars.startTimeOffset = -30.00;
-
-		if (timer.CurrentTimingMethod == TimingMethod.RealTime)
-// Asks user to change to game time if LiveSplit is currently set to Real Time.
-    {        
-        var timingMessage = MessageBox.Show (
-            "This game uses Time without Loads (Game Time) as the main timing method.\n"+
-            "LiveSplit is currently set to show Real Time (RTA).\n"+
-            "Would you like to set the timing method to Game Time?",
-            "LiveSplit | The Callisto Protocol",
-            MessageBoxButtons.YesNo,MessageBoxIcon.Question
-        );
-
-        if (timingMessage == DialogResult.Yes)
-        {
-            timer.CurrentTimingMethod = TimingMethod.GameTime;
-        }
-    }
-
-    //creates text components for variable information
-	vars.SetTextComponent = (Action<string, string>)((id, text) =>
+	startup
 	{
-	        var textSettings = timer.Layout.Components.Where(x => x.GetType().Name == "TextComponent").Select(x => x.GetType().GetProperty("Settings").GetValue(x, null));
-	        var textSetting = textSettings.FirstOrDefault(x => (x.GetType().GetProperty("Text1").GetValue(x, null) as string) == id);
-	        if (textSetting == null)
-	        {
-	        var textComponentAssembly = Assembly.LoadFrom("Components\\LiveSplit.Text.dll");
-	        var textComponent = Activator.CreateInstance(textComponentAssembly.GetType("LiveSplit.UI.Components.TextComponent"), timer);
-	        timer.Layout.LayoutComponents.Add(new LiveSplit.UI.Components.LayoutComponent("LiveSplit.Text.dll", textComponent as LiveSplit.UI.Components.IComponent));
-	
-	        textSetting = textComponent.GetType().GetProperty("Settings", BindingFlags.Instance | BindingFlags.Public).GetValue(textComponent, null);
-	        textSetting.GetType().GetProperty("Text1").SetValue(textSetting, id);
-	        }
-	
-	        if (textSetting != null)
-	        textSetting.GetType().GetProperty("Text2").SetValue(textSetting, text);
-    });
+		Assembly.Load(File.ReadAllBytes("Components/asl-help")).CreateInstance("Basic");
+		vars.Helper.GameName = "The Callisto Protocol";
+		vars.Helper.AlertLoadless();
 
-    //Start Option Settings
-        //Parent setting
-	    settings.Add("Autostart Options", true, "Autostart Options [Select only ONE]");
-	    //Child settings that will sit beneath Parent setting
-        settings.Add("NoCS Autostart", false, "Autostart for versions WITHOUT Cutscene Skips", "Autostart Options");
-        settings.Add("removeIntroTime", false, "Start timer at -30.00s. [No Intro, Pre-Cutscene Skip Patch Runs Only]", "Autostart Options");
-        settings.Add("Blank Space", false, "______________DIVIDER - NOT A REAL OPTION_____________________________________________________________________________________________", "Autostart Options");
-        settings.Add("wCS Autostart", true, "Autostart for versions WITH Cutscene Skips", "Autostart Options");
-        
+		#region setting creation
+		//Autosplitter Settings Creation
+		dynamic[,] _settings =
+		{
+		{ "Chapter Splits", true, "Chapter Splits", null },
+			{ "Outbreak_Persistent",         true, "Outbreak",			"Chapter Splits" },
+			{ "Escape_Persistent",           true, "Aftermath",			"Chapter Splits" },
+			{ "Habitat_Persistent",          true, "Habitat",			"Chapter Splits" },
+			{ "Snowcat_Persistent",          true, "Lost I",			"Chapter Splits" },
+			{ "Hangar_Persistent",           true, "Lost II",			"Chapter Splits" },
+			{ "Europa_Tunnels_Persistent",   false, "Lost III",			"Chapter Splits" },
+			{ "Tunnels_Persistent",          true, "Below",				"Chapter Splits" },
+			{ "Minetown_Persistent",         true, "Colony",			"Chapter Splits" },
+			{ "Tower1",            			 true, "Tower I",           "Chapter Splits" },
+			{ "Europa_Persistent",           true, "Tower II",          "Chapter Splits" },
+			{ "Tower3",            			 true, "Tower III",			"Chapter Splits" },
+			{ "DLC4_Persistent",             true, "Final Transmission","Chapter Splits" },
+		{"GameInfo", 					true, "Print various Game Info to LiveSplit layout",	null},
+			{"Mission",                 true, "Current Mission",                                "GameInfo"},
+			{"timePause",               false, "Current Loading + Current Pause Status",        "GameInfo"},
+			{"camTarget",               false, "Current Camera Target",         				"GameInfo"},
+		{"Debug", 					    false, "Print various Game Info to LiveSplit layout",    null},
+			{"playerLostControl",       true, "Current playerLostControl",                      "Debug"},
+			{"TransitionType",       	true, "Current Transition Type",                      	"Debug"},
+			{"playerCameraName",       	true, "Current Player Camera Name",                     "Debug"},
+			{"playerCameraActive",      true, "Current Player Camera Active Status",            "Debug"},
+			
+		};
+		vars.Helper.Settings.Create(_settings);
+		#endregion
 
-    //Variable Information Settings
-        //Parent setting
-	    settings.Add("Variable Information", true, "Variable Information");
-	    //Child settings that will sit beneath Parent setting
-        settings.Add("Current Mission", true, "Current Mission", "Variable Information");
-        settings.Add("Current Loading", false, "Current Loading", "Variable Information");
-        settings.Add("Current playerLostControl", false, "Current playerLostControl", "Variable Information");
-        settings.Add("Current isPaused", false, "Current isPaused", "Variable Information");
-}
+		#region TextComponent
+		vars.lcCache = new Dictionary<string, LiveSplit.UI.Components.ILayoutComponent>();
+		vars.SetText = (Action<string, object>)((text1, text2) =>
+		{
+			const string FileName = "LiveSplit.Text.dll";
+			LiveSplit.UI.Components.ILayoutComponent lc;
 
-update
-{
-    //cutting the first 16 characters off the string value for a prettier name to work with
-    current.missionPretty = current.mission.ToString().Substring(16);
+			if (!vars.lcCache.TryGetValue(text1, out lc))
+			{
+				lc = timer.Layout.LayoutComponents.Reverse().Cast<dynamic>()
+					.FirstOrDefault(llc => llc.Path.EndsWith(FileName) && llc.Component.Settings.Text1 == text1)
+					?? LiveSplit.UI.Components.ComponentManager.LoadLayoutComponent(FileName, timer);
 
-    //Prints room iD
-    if(settings["Current Loading"]){vars.SetTextComponent("Loading Value: ",current.loading.ToString());}
-    //Prints mission
-    if(settings["Current Mission"]){vars.SetTextComponent("Map: ",current.missionPretty.ToString());}
-    //Prints isPaused
-    if(settings["Current isPaused"]){vars.SetTextComponent("Paused Value: ",current.pauseStatus.ToString());}
-    //Prints playerLostControl
-    if(settings["Current playerLostControl"]){vars.SetTextComponent("Player Lost Control? : ",current.playerLostControl.ToString());}
+				vars.lcCache.Add(text1, lc);
+			}
 
-//DEBUG CODE 
-//print(current.loading.ToString()); 
-//print(current.pauseStatus.ToString()); 
-//print("Current Mission is " + current.mission.ToString());
-//print(modules.First().ModuleMemorySize.ToString());
-}
+			if (!timer.Layout.LayoutComponents.Contains(lc)) timer.Layout.LayoutComponents.Add(lc);
+			dynamic tc = lc.Component;
+			tc.Settings.Text1 = text1;
+			tc.Settings.Text2 = text2.ToString();
+		});
+		vars.RemoveText = (Action<string>)(text1 =>
+		{
+			LiveSplit.UI.Components.ILayoutComponent lc;
+			if (vars.lcCache.TryGetValue(text1, out lc))
+			{
+				timer.Layout.LayoutComponents.Remove(lc);
+				vars.lcCache.Remove(text1);
+			}
+		});
+		vars.RemoveAllTexts = (Action)(() =>
+		{
+			foreach (var lc in vars.lcCache.Values) timer.Layout.LayoutComponents.Remove(lc);
+			vars.lcCache.Clear();
+		});
+		#endregion
 
-onStart
-{
-    // This makes sure the timer always starts at 0.00
-    timer.IsGameTimePaused = true;
-}
+		vars.CompletedSplits 	 = new HashSet<string>();
+		vars.LeftMainMenu    	 = false;
+		vars.AutostartPrimed 	 = false;
+	}
 
-gameTime
-{
-    if(settings["removeIntroTime"] && vars.startTimeOffsetFlag) 
-    {
-        vars.startTimeOffsetFlag = false;
-        return TimeSpan.FromSeconds(vars.startTimeOffset);
-    }
-}
+	init
+	{
+		IntPtr gWorld = vars.Helper.ScanRel(3, "48 8B 1D ???????? 48 85 DB 74 ?? 41 B0 01");
+		IntPtr gEngine = vars.Helper.ScanRel(3, "48 89 05 ???????? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 48 8D 4D");
+		IntPtr fNames = vars.Helper.ScanRel(3, "48 8D 0d ???????? E8 ???????? C6 05 ?????????? 0F 10 03");
+		IntPtr gSyncLoadCount = vars.Helper.ScanRel(5, "89 43 60 8B 05 ?? ?? ?? ??");
+		IntPtr loadBase         = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 0F 29 ?? ?? ?? F2 ?? ?? ?? 66");
+		IntPtr plcBase          = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 48 85 ?? 75 ?? E8 ?? ?? ?? ?? 48 85 ?? 74 ?? 48 8B ?? 48 83 ?? ?? E9 ?? ?? ?? ?? 33"); 
+		//IntPtr pauseStatusBase  = vars.Helper.ScanRel(3, "48 63 ?? ?? ?? ?? ?? 8D ?? ?? 3B ?? ?? ?? ?? ?? 89 ?? ?? ?? ?? ?? 7E ?? 8B ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B ?? ?? ?? ?? ?? 48 8D ?? ?? 48 8D ?? ?? 48 85 ?? 74 ?? F2");
+		
+		if (gWorld == IntPtr.Zero || gEngine == IntPtr.Zero)
+		{
+			const string Msg = "Not all required addresses could be found by scanning.";
+			throw new Exception(Msg);
+		}
 
+		vars.FNameToString = (Func<ulong, string>)(fName =>
+		{
+			var nameIdx = (fName & 0x000000000000FFFF) >> 0x00;
+			var chunkIdx = (fName & 0x00000000FFFF0000) >> 0x10;
+			var number = (fName & 0xFFFFFFFF00000000) >> 0x20;
 
-start
-{
-    // Run starts when leaving the first loadscreen
-    
-    if (current.mission == null) 
-    {return false;}
+			// IntPtr chunk = vars.Helper.Read<IntPtr>(fNames + 0x10 + (int)chunkIdx * 0x8);
+			IntPtr chunk = vars.Helper.Read<IntPtr>(fNames + 0x10 + (int)chunkIdx * 0x8);
+			IntPtr entry = chunk + (int)nameIdx * sizeof(short);
 
-    if  (
-        // For versions of the game without cutscene skips
-            //works on fresh boot of game when pointer has not been initialized yet
-            (settings["NoCS Autostart"] && old.mission == null && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
-            (settings["NoCS Autostart"] && old.mission == null && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
+			int length = vars.Helper.Read<short>(entry) >> 6;
+			string name = vars.Helper.ReadString(length, ReadStringType.UTF8, entry + sizeof(short));
 
-            //works after pointer is initialized by loading a map
-            (settings["NoCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
-            (settings["NoCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_ColdOpen_Persistent") ||
+			return number == 0 ? name : name + "_" + number;
+		});
 
-            //DLC autostart including fresh boot and also with pointer initialized
-            (settings["NoCS Autostart"] && old.mission == null && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
-            (settings["NoCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
+		#region Text Component
+		vars.SetTextIfEnabled = (Action<string, object>)((text1, text2) =>
+		{
+			if (settings[text1]) vars.SetText(text1, text2); 
+			else vars.RemoveText(text1);
+		});
+		#endregion
 
-        // For versions of the game with cutscene skips
-            //works on fresh boot of game when pointer has not been initialized yet
-            (settings["wCS Autostart"] && old.playerLostControl == 1 && current.playerLostControl == 0 && current.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent") || 
+		vars.Helper["GSync"] = vars.Helper.Make<bool>(gSyncLoadCount); // GSync
+		// GWorld.FNameIndex
+		vars.Helper["GWorldName"] = vars.Helper.Make<ulong>(gWorld, 0x18);
+		// GEngine -> TransitionType (In Pause Menu)
+		vars.Helper["TransitionType"] = vars.Helper.Make<int>(gEngine, 0x8C8); 
+		//vars.Helper["pauseStatus"]  = vars.Helper.Make<bool>(pauseStatusBase);
+		vars.Helper["loading"]      = vars.Helper.Make<int>(loadBase, 0xC4);
+		// GEngine -> GameInstance -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> bCanBeDamaged //THIS AINT IT BUT IM LOOKIN
+		vars.Helper["playerLostControl"]  = vars.Helper.Make<int>(plcBase, 0x138);
+		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> PlayerCameraManager(2B8) -> ViewTarget.Target(320)
+		vars.Helper["camTargetName"]  = vars.Helper.Make<ulong>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x2B8, 0xF90, 0x18);
 
-            //DLC autostart including fresh boot and also with pointer initialized
-            (settings["wCS Autostart"] && old.mission == null && current.mission == "/Game/DLC4/Maps/DLC4_Persistent") ||
-            (settings["wCS Autostart"] && old.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent" && current.mission == "/Game/DLC4/Maps/DLC4_Persistent")
-        )  
-    {
-        // custom timing
-        if (settings["removeIntroTime"]) vars.startTimeOffsetFlag = true;
-        return true;
-    }
+		
 
-    return false;
-}
+		current.World = "";
+		current.camTarget = "";
+		current.playerLostControl = 0;
+		current.playerCameraName = "Waiting for Player Camera...";
+		current.playerCameraActive = false;
+		current.loading = 0;
+	}
 
+	update
+	{
+		vars.Helper.Update();
+		vars.Helper.MapPointers();
 
-split 
-{ 	
-    return
-    old.mission == "/Game/Maps/Game/Outbreak/Outbreak_Persistent" && current.mission == "/Game/Maps/Game/Escape/Escape_Persistent" || /* Outbreak - Aftermath */
-    old.mission == "/Game/Maps/Game/Escape/Escape_Persistent" && current.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" || /* Aftermath - Habitat */
-    old.mission == "/Game/Maps/Game/Habitat/Habitat_Persistent" && current.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" || /* Habitat - Lost 1 */
-    old.mission == "/Game/Maps/Game/Snowcat/Snowcat_Persistent" && current.mission == "/Game/Maps/Game/Hangar/Hangar_Persistent" || /* Lost 1 - Lost 2 */
-    old.mission == "/Game/Maps/Game/Europa/Europa_Tunnels_Persistent" && current.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" || /* Technically Lost 3 - Below. Speedrunners dont make a split for Lost 3 tho cause its short */
-    old.mission == "/Game/Maps/Game/Tunnels/Tunnels_Persistent" && current.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" || /* Below - Colony */
-    old.mission == "/Game/Maps/Game/Minetown/Minetown_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent" || /* Colony - Tower 1 */
-    old.mission == "/Game/Maps/Game/Tower/Tower_Persistent" && current.mission == "/Game/Maps/Game/Europa/Europa_Persistent" || /* Tower 1 - Tower 2 */
-    old.mission == "/Game/Maps/Game/Europa/Europa_Persistent" && current.mission == "/Game/Maps/Game/Tower/Tower_Persistent"; /* Tower 2 - Tower 3 */
-}	
+		var World = vars.FNameToString(current.GWorldName);
+		if (!string.IsNullOrEmpty(World) && World != "None")
+			current.World = World;
+		if (old.World != current.World) vars.Log("World: " + old.World + " -> " + current.World);
 
-isLoading
-{
-    return current.loading == 65537 || current.pauseStatus == 1 || current.mission == "/Game/Maps/Game/MainMenu/MainMenu_Persistent";
-}
+		var camTarget = vars.FNameToString(current.camTargetName);
+		if (!string.IsNullOrEmpty(camTarget) && camTarget != "None")
+			current.camTarget = camTarget;
+		if (old.camTarget != current.camTarget)
+			vars.Log("camTarget: " + old.camTarget + " -> " + current.camTarget);
 
-exit
-{
-	timer.IsGameTimePaused = true;
-}
+		if (old.loading == 257 && current.loading == 65537)
+			{ current.playerCameraName = "Waiting for Player Camera..."; current.playerCameraActive = false; }
+		if (old.loading == 65537 && current.loading == 257)
+			{ current.playerCameraName = current.camTarget; }
+		if (current.camTarget == current.playerCameraName)
+			{ current.playerCameraActive = true; }
+
+		vars.SetTextIfEnabled("Mission",current.World);
+		vars.SetTextIfEnabled("camTarget",current.camTarget);
+		vars.SetTextIfEnabled("timePause","Loading = " + current.loading + " & " + "Pause Status = " + current.TransitionType);
+		vars.SetTextIfEnabled("playerLostControl",current.playerLostControl);
+		vars.SetTextIfEnabled("TransitionType",current.TransitionType);
+		vars.SetTextIfEnabled("playerCameraActive",current.playerCameraActive);
+		vars.SetTextIfEnabled("playerCameraName",current.playerCameraName);
+	}
+
+	isLoading
+	{
+		return current.TransitionType == 1 || current.World == "MainMenu_Persistent" || current.loading == 65537;
+	}
+
+	//BP_PhxPlayerController_C - Pawn - (Vector) ReplicatedMovement.Location/Velocity
+
+	start
+	{
+		if (
+				current.playerCameraActive == true && old.playerLostControl == 1 && current.playerLostControl == 0
+		   )
+		   {return true;}
+	}
+
+	/*
+	start
+	{
+		if (old.World == "MainMenu_Persistent" && current.World != "MainMenu_Persistent") { vars.LeftMainMenu = true; }
+			
+		if (old.playerLostControl == 1 && current.playerLostControl == 0){ vars.AutostartPrimed = true; } 
+
+		if (vars.LeftMainMenu && vars.AutostartPrimed) 
+		{
+			vars.LeftMainMenu    = false;
+			vars.AutostartPrimed = false;
+			return true;
+		}
+	}
+	*/
+
+	split
+	{
+		var World = current.World;
+
+		if (old.World != World)
+		{
+			if (   (World == "Outbreak_Persistent"       && settings["Outbreak_Persistent"])
+				|| (World == "Escape_Persistent"         && settings["Escape_Persistent"])
+				|| (World == "Habitat_Persistent"        && settings["Habitat_Persistent"])
+				|| (World == "Snowcat_Persistent"        && settings["Snowcat_Persistent"])
+				|| (World == "Hangar_Persistent"         && settings["Hangar_Persistent"])
+				|| (World == "Europa_Tunnels_Persistent" && settings["Europa_Tunnels_Persistent"])
+				|| (World == "Tunnels_Persistent"        && settings["Tunnels_Persistent"])
+				|| (World == "Minetown_Persistent"       && settings["Minetown_Persistent"])
+				|| (World == "Europa_Persistent"         && settings["Europa_Persistent"])			   // Tower 2
+				|| (World == "DLC4_Persistent"           && settings["DLC4_Persistent"])
+			   )
+			{
+				if (!vars.CompletedSplits.Contains(World))
+				{
+					vars.CompletedSplits.Add(World);
+					return true;
+				}
+			}
+		}
+
+		if
+		(	   old.World == "Minetown_Persistent" && current.World == "Tower_Persistent" && settings["Tower1"]  /* Colony - Tower 1 */
+			|| old.World == "Europa_Persistent"   && current.World == "Tower_Persistent" && settings["Tower3"]	/* Tower 2 - Tower 3 */
+		)
+		{return true;}
+	}
+
+	exit
+	{
+		timer.IsGameTimePaused = true;
+	}
+
+	onReset
+	{
+		vars.CompletedSplits.Clear();
+		vars.LeftMainMenu    = false;
+		vars.AutostartPrimed = false;
+		current.playerCameraActive = false;
+		current.playerCameraName = "";
+	}
