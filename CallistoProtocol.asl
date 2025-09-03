@@ -33,6 +33,7 @@
 			{"playerVelCombinedRaw",    false, "Current Player Velocity XYZ Combined Raw",       "PlayerVelDisplay"},
 			{"playerVelTrueRaw",    	false, "Current Player Velocity XYZ Combined Raw",       "PlayerVelDisplay"},
 		{"Debug", 					    false, "Print Debug Info",    							null},
+			{"placeholder",       true, "placeholder",                      "Debug"},
 			{"playerLostControl",       true, "Current playerLostControl",                      "Debug"},
 			{"TransitionType",       	true, "Current Transition Type",                      	"Debug"},
 			{"playerCameraName",       	true, "Current Player Camera Name",                     "Debug"},
@@ -72,24 +73,18 @@
 				vars.lcCache.Remove(text1);
 			}
 		});
-		vars.RemoveAllTexts = (Action)(() =>
-		{
-			foreach (var lc in vars.lcCache.Values) timer.Layout.LayoutComponents.Remove(lc);
-			vars.lcCache.Clear();
-		});
 		#endregion
 
 		vars.CompletedSplits 	 = new HashSet<string>();
-		vars.LeftMainMenu    	 = false;
-		vars.AutostartPrimed 	 = false;
 	}
 
 	init
 	{
 		IntPtr gWorld = vars.Helper.ScanRel(3, "48 8B 1D ???????? 48 85 DB 74 ?? 41 B0 01");
 		IntPtr gEngine = vars.Helper.ScanRel(3, "48 89 05 ???????? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 48 8D 4D");
-		IntPtr fNames = vars.Helper.ScanRel(3, "48 8D 0d ???????? E8 ???????? C6 05 ?????????? 0F 10 03");
+		IntPtr fNamePool = vars.Helper.ScanRel(3, "48 8D 0d ???????? E8 ???????? C6 05 ?????????? 0F 10 03");
 		IntPtr gSyncLoadCount = vars.Helper.ScanRel(5, "89 43 60 8B 05 ?? ?? ?? ??");
+		IntPtr PhxProgressManager = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 49 FF ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8B ?? E9");
 		IntPtr loadBase         = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 0F 29 ?? ?? ?? F2 ?? ?? ?? 66");
 		IntPtr plcBase          = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 48 85 ?? 75 ?? E8 ?? ?? ?? ?? 48 85 ?? 74 ?? 48 8B ?? 48 83 ?? ?? E9 ?? ?? ?? ?? 33"); 
 		//IntPtr pauseStatusBase  = vars.Helper.ScanRel(3, "48 63 ?? ?? ?? ?? ?? 8D ?? ?? 3B ?? ?? ?? ?? ?? 89 ?? ?? ?? ?? ?? 7E ?? 8B ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B ?? ?? ?? ?? ?? 48 8D ?? ?? 48 8D ?? ?? 48 85 ?? 74 ?? F2");
@@ -106,8 +101,8 @@
 			var chunkIdx = (fName & 0x00000000FFFF0000) >> 0x10;
 			var number = (fName & 0xFFFFFFFF00000000) >> 0x20;
 
-			// IntPtr chunk = vars.Helper.Read<IntPtr>(fNames + 0x10 + (int)chunkIdx * 0x8);
-			IntPtr chunk = vars.Helper.Read<IntPtr>(fNames + 0x10 + (int)chunkIdx * 0x8);
+			// IntPtr chunk = vars.Helper.Read<IntPtr>(fNamePool + 0x10 + (int)chunkIdx * 0x8);
+			IntPtr chunk = vars.Helper.Read<IntPtr>(fNamePool + 0x10 + (int)chunkIdx * 0x8);
 			IntPtr entry = chunk + (int)nameIdx * sizeof(short);
 
 			int length = vars.Helper.Read<short>(entry) >> 6;
@@ -123,9 +118,9 @@
 			else vars.RemoveText(text1);
 		});
 		#endregion
-
+		
 		vars.Helper["GSync"] = vars.Helper.Make<bool>(gSyncLoadCount); // GSync
-		// GWorld.FNameIndex
+		// GWorld.FNameIndex(18)
 		vars.Helper["GWorldName"] = vars.Helper.Make<ulong>(gWorld, 0x18);
 		// GEngine -> TransitionType (In Pause Menu)
 		vars.Helper["TransitionType"] = vars.Helper.Make<int>(gEngine, 0x8C8); 
@@ -133,8 +128,10 @@
 		vars.Helper["loading"]      = vars.Helper.Make<int>(loadBase, 0xC4);
 		// GEngine -> GameInstance -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> bCanBeDamaged //THIS AINT IT BUT IM LOOKIN
 		vars.Helper["playerLostControl"]  = vars.Helper.Make<int>(plcBase, 0x138);
-		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> PlayerCameraManager(2B8) -> ViewTarget.Target(320)
+		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> PlayerCameraManager(2B8) -> ViewTarget.Target(320) -> FNameIndex
 		vars.Helper["camTargetName"]  = vars.Helper.Make<ulong>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x2B8, 0xF90, 0x18);
+
+		vars.Helper["checkpointName"] = vars.Helper.Make<ulong>(PhxProgressManager, 0x440, 0x298);
 		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> Character(260) -> CapsuleComponent(290) -> RelativeLocation(11C)
     	vars.Helper["playerPos"] = vars.Helper.Make<Vector3f>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x290, 0x11C);
 		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> Character(260) -> CharacterMovement(288) -> Velocity(0C4)
@@ -145,10 +142,13 @@
 
 		// ??? -> PhxProgressManager(???) -> CurrentCheckpoint (440) -> CheckpointId maybe? (298 - FName)
 
-		
+		// GameEngine - PhxGameInstance - UISystem - ProgressPromptDefaultClass or ToolTipWidgetClass
+
+		// GameEngine - PhxGameInstance - PlayerCharacter(680) - InventoryComp(6D8) or StateMachineComp or HealthComp or bDead or bInvulnerable (try to force to always true!) or EnterCombatSound/ExitCombatSound
 
 		current.World = "";
 		current.camTarget = "";
+		current.checkpointID = "";
 		current.playerLostControl = 0;
 		current.playerCameraName = "Waiting for Player Camera...";
 		current.playerCameraActive = false;
@@ -173,6 +173,12 @@
 		if (old.camTarget != current.camTarget)
 			vars.Log("camTarget: " + old.camTarget + " -> " + current.camTarget);
 
+		var checkpointID = vars.FNameToString(current.checkpointName);
+		if (!string.IsNullOrEmpty(checkpointID) && checkpointID != "None")
+			current.checkpointID = checkpointID;
+		if (old.checkpointID != current.checkpointID)
+			vars.Log("checkpointID: " + old.checkpointID + " -> " + current.checkpointID);
+
 		if (old.loading == 257 && current.loading == 65537)
 			{ current.playerCameraName = "Waiting for Player Camera..."; current.playerCameraActive = false; }
 		if (old.loading == 65537 && current.loading == 257)
@@ -180,9 +186,11 @@
 		if (current.camTarget == current.playerCameraName)
 			{ current.playerCameraActive = true; }
 
-		current.playerVelRaw = (float)System.Math.Sqrt(current.playerVelX*current.playerVelX + current.playerVelY*current.playerVelY + current.playerVelZ*current.playerVelZ / 10f);
-		current.playerVelDisplay = (int)(current.playerVelRaw / 10f);
+		float velMath = current.playerVelX*current.playerVelX + current.playerVelY*current.playerVelY + current.playerVelZ*current.playerVelZ;
+		current.playerVelRaw = (float)System.Math.Sqrt(velMath);
+		current.playerVelDisplay = (int)(current.playerVelRaw / 10f);		
 
+		vars.SetTextIfEnabled("placeholder",current.GSync);
 		vars.SetTextIfEnabled("Mission",current.World);
 		vars.SetTextIfEnabled("camTarget",current.camTarget);
 		vars.SetTextIfEnabled("timePause","Loading = " + current.loading + " & " + "Pause Status = " + current.TransitionType);
@@ -194,14 +202,14 @@
 		vars.SetTextIfEnabled("playerVel",current.playerVelDisplay);
 		vars.SetTextIfEnabled("playerVelCombinedRaw",current.playerVelRaw);
 		vars.SetTextIfEnabled("playerVelTrueRaw", current.playerVelVector);
+
+		//vars.Log("PlayerPos " + current.playerPos + " PlayerVel " + current.playerVelDisplay);
 	}
 
 	isLoading
 	{
 		return current.TransitionType == 1 || current.World == "MainMenu_Persistent" || current.loading == 65537;
 	}
-
-	//BP_PhxPlayerController_C - Pawn - (Vector) ReplicatedMovement.Location/Velocity
 
 	start
 	{
@@ -211,21 +219,12 @@
 		   {return true;}
 	}
 
-	/*
-	start
+	onStart
 	{
-		if (old.World == "MainMenu_Persistent" && current.World != "MainMenu_Persistent") { vars.LeftMainMenu = true; }
-			
-		if (old.playerLostControl == 1 && current.playerLostControl == 0){ vars.AutostartPrimed = true; } 
-
-		if (vars.LeftMainMenu && vars.AutostartPrimed) 
-		{
-			vars.LeftMainMenu    = false;
-			vars.AutostartPrimed = false;
-			return true;
-		}
+		vars.CompletedSplits.Clear();
+		current.playerCameraActive = false;
+		current.playerCameraName = "";
 	}
-	*/
 
 	split
 	{
@@ -268,8 +267,6 @@
 	onReset
 	{
 		vars.CompletedSplits.Clear();
-		vars.LeftMainMenu    = false;
-		vars.AutostartPrimed = false;
 		current.playerCameraActive = false;
 		current.playerCameraName = "";
 	}
