@@ -11,7 +11,6 @@
 		dynamic[,] _settings =
 		{
 		{ "Chapter Splits", true, "Chapter Splits", null },
-			{ "Outbreak_Persistent",         true, "Outbreak",			"Chapter Splits" },
 			{ "Escape_Persistent",           true, "Aftermath",			"Chapter Splits" },
 			{ "Habitat_Persistent",          true, "Habitat",			"Chapter Splits" },
 			{ "Snowcat_Persistent",          true, "Lost I",			"Chapter Splits" },
@@ -23,22 +22,11 @@
 			{ "Europa_Persistent",           true, "Tower II",          "Chapter Splits" },
 			{ "Tower3",            			 true, "Tower III",			"Chapter Splits" },
 			{ "DLC4_Persistent",             true, "Final Transmission","Chapter Splits" },
-		{"GameInfo", 					true, "Print Various Game Info",						null},
-			{"Mission",                 true, "Current Mission",                                "GameInfo"},
-			{"playerPos",               true, "Current Player Position",                        "GameInfo"},
-			{"timePause",               false, "Current Loading + Current Pause Status",        "GameInfo"},
-			{"camTarget",               false, "Current Camera Target",         				"GameInfo"},
-		{"PlayerVelDisplay", 			true, "Print Player Speed",								null},
-			{"playerVel", true, "Current Player Velocity XYZ Combined & Simplified","PlayerVelDisplay"},
-			{"playerVelCombinedRaw",    false, "Current Player Velocity XYZ Combined Raw",       "PlayerVelDisplay"},
-			{"playerVelTrueRaw",    	false, "Current Player Velocity XYZ Combined Raw",       "PlayerVelDisplay"},
-		{"Debug", 					    false, "Print Debug Info",    							null},
-			{"placeholder",       true, "placeholder",                      "Debug"},
-			{"playerLostControl",       true, "Current playerLostControl",                      "Debug"},
-			{"TransitionType",       	true, "Current Transition Type",                      	"Debug"},
-			{"playerCameraName",       	true, "Current Player Camera Name",                     "Debug"},
-			{"playerCameraActive",      true, "Current Player Camera Active Status",            "Debug"},
-			
+		{ "Debug", false, "Debug", null },
+			{ "Placeholder",                 true, "Placeholder",			     "Debug" },
+			{ "World",                       true, "World",			             "Debug" },
+			{ "MovementMode",                false, "MovementMode",			     "Debug" },
+			{ "TransitionType",              false, "TransitionType",			 "Debug" },
 		};
 		vars.Helper.Settings.Create(_settings);
 		#endregion
@@ -83,17 +71,25 @@
 		IntPtr gWorld = vars.Helper.ScanRel(3, "48 8B 1D ???????? 48 85 DB 74 ?? 41 B0 01");
 		IntPtr gEngine = vars.Helper.ScanRel(3, "48 89 05 ???????? 48 85 C9 74 ?? E8 ?? ?? ?? ?? 48 8D 4D");
 		IntPtr fNamePool = vars.Helper.ScanRel(3, "48 8D 0d ???????? E8 ???????? C6 05 ?????????? 0F 10 03");
-		IntPtr gSyncLoadCount = vars.Helper.ScanRel(5, "89 43 60 8B 05 ?? ?? ?? ??");
-		IntPtr PhxProgressManager = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 49 FF ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8B ?? E9");
-		IntPtr loadBase         = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 0F 29 ?? ?? ?? F2 ?? ?? ?? 66");
-		IntPtr plcBase          = vars.Helper.ScanRel(3, "48 8B ?? ?? ?? ?? ?? 48 85 ?? 75 ?? E8 ?? ?? ?? ?? 48 85 ?? 74 ?? 48 8B ?? 48 83 ?? ?? E9 ?? ?? ?? ?? 33"); 
-		//IntPtr pauseStatusBase  = vars.Helper.ScanRel(3, "48 63 ?? ?? ?? ?? ?? 8D ?? ?? 3B ?? ?? ?? ?? ?? 89 ?? ?? ?? ?? ?? 7E ?? 8B ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B ?? ?? ?? ?? ?? 48 8D ?? ?? 48 8D ?? ?? 48 85 ?? 74 ?? F2");
-		
-		if (gWorld == IntPtr.Zero || gEngine == IntPtr.Zero)
-		{
-			const string Msg = "Not all required addresses could be found by scanning.";
-			throw new Exception(Msg);
-		}
+		 
+		// GWorld.FNameIndex(18)
+		vars.Helper["GWorldName"] = vars.Helper.Make<ulong>(gWorld, 0x18);
+		// GEngine -> TransitionType (In Pause Menu)
+		vars.Helper["TransitionType"] = vars.Helper.Make<int>(gEngine, 0x8C8); 
+		// GWorld - StreaminglevelsToConsider[ArrayNum](A0)
+    	vars.Helper["SLCArrayNum"] = vars.Helper.Make<int>(gWorld, 0xA0);
+		// GWorld - StreaminglevelsToConsider[ArrayNum](A4)
+    	vars.Helper["SLCArrayMax"] = vars.Helper.Make<int>(gWorld, 0xA4);
+		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) - PlayerController(30) - Character(260) - CharacterMovement(288) - MovementMode(168)
+		vars.Helper["MovementMode"] = vars.Helper.Make<byte>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x168);
+		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) - PlayerController(30) - CameraRig(688) - CameraActor(270) - Name(18)
+		vars.Helper["CameraActorName"] = vars.Helper.Make<ulong>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x688, 0x270, 0x18);
+
+
+		//vars.Helper["checkpointName"] = vars.Helper.Make<ulong>(PhxProgressManager, 0x440, 0x298);
+		// ??? -> PhxProgressManager(???) -> CurrentCheckpoint (440) -> CheckpointId maybe? (298 - FName)
+		// GameEngine - PhxGameInstance - UISystem - ProgressPromptDefaultClass or ToolTipWidgetClass
+		// GameEngine - PhxGameInstance - PlayerCharacter(680) - InventoryComp(6D8) or StateMachineComp or HealthComp or bDead or bInvulnerable (try to force to always true!) or EnterCombatSound/ExitCombatSound
 
 		vars.FNameToString = (Func<ulong, string>)(fName =>
 		{
@@ -118,43 +114,14 @@
 			else vars.RemoveText(text1);
 		});
 		#endregion
-		
-		vars.Helper["GSync"] = vars.Helper.Make<bool>(gSyncLoadCount); // GSync
-		// GWorld.FNameIndex(18)
-		vars.Helper["GWorldName"] = vars.Helper.Make<ulong>(gWorld, 0x18);
-		// GEngine -> TransitionType (In Pause Menu)
-		vars.Helper["TransitionType"] = vars.Helper.Make<int>(gEngine, 0x8C8); 
-		//vars.Helper["pauseStatus"]  = vars.Helper.Make<bool>(pauseStatusBase);
-		vars.Helper["loading"]      = vars.Helper.Make<int>(loadBase, 0xC4);
-		// GEngine -> GameInstance -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> bCanBeDamaged //THIS AINT IT BUT IM LOOKIN
-		vars.Helper["playerLostControl"]  = vars.Helper.Make<int>(plcBase, 0x138);
-		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> PlayerCameraManager(2B8) -> ViewTarget.Target(320) -> FNameIndex
-		vars.Helper["camTargetName"]  = vars.Helper.Make<ulong>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x2B8, 0xF90, 0x18);
-
-		vars.Helper["checkpointName"] = vars.Helper.Make<ulong>(PhxProgressManager, 0x440, 0x298);
-		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> Character(260) -> CapsuleComponent(290) -> RelativeLocation(11C)
-    	vars.Helper["playerPos"] = vars.Helper.Make<Vector3f>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x290, 0x11C);
-		// GEngine -> GameInstance(D48) -> LocalPlayers[0](38) -> Dereference(0) -> PlayerController(30) -> Character(260) -> CharacterMovement(288) -> Velocity(0C4)
-    	vars.Helper["playerVelVector"] = vars.Helper.Make<Vector3f>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0C4);
-		vars.Helper["playerVelX"] = vars.Helper.Make<float>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0C4);
-		vars.Helper["playerVelY"] = vars.Helper.Make<float>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0C8);
-		vars.Helper["playerVelZ"] = vars.Helper.Make<float>(gEngine, 0xD48, 0x38, 0x0, 0x30, 0x260, 0x288, 0x0CC);
-
-		// ??? -> PhxProgressManager(???) -> CurrentCheckpoint (440) -> CheckpointId maybe? (298 - FName)
-
-		// GameEngine - PhxGameInstance - UISystem - ProgressPromptDefaultClass or ToolTipWidgetClass
-
-		// GameEngine - PhxGameInstance - PlayerCharacter(680) - InventoryComp(6D8) or StateMachineComp or HealthComp or bDead or bInvulnerable (try to force to always true!) or EnterCombatSound/ExitCombatSound
 
 		current.World = "";
-		current.camTarget = "";
+		current.Placeholder = "";
+		current.TransitionType = 0;
+		current.MovementMode = 0;
+		current.SLCArrayNum = 999;
+		current.SLCArrayMax = 999;
 		current.checkpointID = "";
-		current.playerLostControl = 0;
-		current.playerCameraName = "Waiting for Player Camera...";
-		current.playerCameraActive = false;
-		current.loading = 0;
-		current.playerVelRaw = 0;
-		current.playerVelDisplay = 0;
 	}
 
 	update
@@ -162,68 +129,44 @@
 		vars.Helper.Update();
 		vars.Helper.MapPointers();
 
+		var Placeholder = vars.FNameToString(current.CameraActorName);
+		if (!string.IsNullOrEmpty(Placeholder) && Placeholder != "None")
+			current.Placeholder = Placeholder;
+
 		var World = vars.FNameToString(current.GWorldName);
 		if (!string.IsNullOrEmpty(World) && World != "None")
 			current.World = World;
-		if (old.World != current.World) vars.Log("World: " + old.World + " -> " + current.World);
 
-		var camTarget = vars.FNameToString(current.camTargetName);
-		if (!string.IsNullOrEmpty(camTarget) && camTarget != "None")
-			current.camTarget = camTarget;
-		if (old.camTarget != current.camTarget)
-			vars.Log("camTarget: " + old.camTarget + " -> " + current.camTarget);
+		#region Debug Prints
+		if (settings["Debug"])
+			{
+				if (old.Placeholder != current.Placeholder) 
+				{
+				vars.Log("Placeholder: " + old.Placeholder + " -> " + current.Placeholder); 
+				vars.SetTextIfEnabled("Placeholder",current.Placeholder);
+				}
+				if (old.World != current.World) {vars.Log("World: " + old.World + " -> " + current.World); vars.SetTextIfEnabled("World",current.World);}
+				if (old.TransitionType != current.TransitionType) {vars.Log("TransitionType: " + old.TransitionType + " -> " + current.TransitionType); vars.SetTextIfEnabled("TransitionType",current.TransitionType);}
+				if (old.MovementMode != current.MovementMode) {vars.Log("MovementMode: " + old.MovementMode + " -> " + current.MovementMode); vars.SetTextIfEnabled("MovementMode",current.MovementMode);}
+			}
+		#endregion
 
-		var checkpointID = vars.FNameToString(current.checkpointName);
-		if (!string.IsNullOrEmpty(checkpointID) && checkpointID != "None")
-			current.checkpointID = checkpointID;
-		if (old.checkpointID != current.checkpointID)
-			vars.Log("checkpointID: " + old.checkpointID + " -> " + current.checkpointID);
-
-		if (old.loading == 257 && current.loading == 65537)
-			{ current.playerCameraName = "Waiting for Player Camera..."; current.playerCameraActive = false; }
-		if (old.loading == 65537 && current.loading == 257)
-			{ current.playerCameraName = current.camTarget; }
-		if (current.camTarget == current.playerCameraName)
-			{ current.playerCameraActive = true; }
-
-		float velMath = current.playerVelX*current.playerVelX + current.playerVelY*current.playerVelY + current.playerVelZ*current.playerVelZ;
-		current.playerVelRaw = (float)System.Math.Sqrt(velMath);
-		current.playerVelDisplay = (int)(current.playerVelRaw / 10f);		
-
-		vars.SetTextIfEnabled("placeholder",current.GSync);
-		vars.SetTextIfEnabled("Mission",current.World);
-		vars.SetTextIfEnabled("camTarget",current.camTarget);
-		vars.SetTextIfEnabled("timePause","Loading = " + current.loading + " & " + "Pause Status = " + current.TransitionType);
-		vars.SetTextIfEnabled("playerLostControl",current.playerLostControl);
-		vars.SetTextIfEnabled("TransitionType",current.TransitionType);
-		vars.SetTextIfEnabled("playerCameraActive",current.playerCameraActive);
-		vars.SetTextIfEnabled("playerCameraName",current.playerCameraName);
-		vars.SetTextIfEnabled("playerPos",current.playerPos);
-		vars.SetTextIfEnabled("playerVel",current.playerVelDisplay);
-		vars.SetTextIfEnabled("playerVelCombinedRaw",current.playerVelRaw);
-		vars.SetTextIfEnabled("playerVelTrueRaw", current.playerVelVector);
-
-		//vars.Log("PlayerPos " + current.playerPos + " PlayerVel " + current.playerVelDisplay);
+		//vars.Log("World: " + current.World);
 	}
 
 	isLoading
 	{
-		return current.TransitionType == 1 || current.World == "MainMenu_Persistent" || current.loading == 65537;
+		return current.TransitionType == 1 || current.World == "LevelTransitions" || current.World == "MainMenu_Persistent" || current.MovementMode == 3 || current.SLCArrayNum != 0 || current.SLCArrayMax == 0;
 	}
 
 	start
 	{
-		if (
-				current.playerCameraActive == true && old.playerLostControl == 1 && current.playerLostControl == 0
-		   )
-		   {return true;}
+		return old.MovementMode == 6 && current.MovementMode == 1;
 	}
 
 	onStart
 	{
 		vars.CompletedSplits.Clear();
-		current.playerCameraActive = false;
-		current.playerCameraName = "";
 	}
 
 	split
@@ -232,8 +175,9 @@
 
 		if (old.World != World)
 		{
-			if (   (World == "Outbreak_Persistent"       && settings["Outbreak_Persistent"])
-				|| (World == "Escape_Persistent"         && settings["Escape_Persistent"])
+			if 
+			(
+				(World == "Escape_Persistent"         && settings["Escape_Persistent"])
 				|| (World == "Habitat_Persistent"        && settings["Habitat_Persistent"])
 				|| (World == "Snowcat_Persistent"        && settings["Snowcat_Persistent"])
 				|| (World == "Hangar_Persistent"         && settings["Hangar_Persistent"])
@@ -242,7 +186,7 @@
 				|| (World == "Minetown_Persistent"       && settings["Minetown_Persistent"])
 				|| (World == "Europa_Persistent"         && settings["Europa_Persistent"])			   // Tower 2
 				|| (World == "DLC4_Persistent"           && settings["DLC4_Persistent"])
-			   )
+			)
 			{
 				if (!vars.CompletedSplits.Contains(World))
 				{
@@ -267,6 +211,4 @@
 	onReset
 	{
 		vars.CompletedSplits.Clear();
-		current.playerCameraActive = false;
-		current.playerCameraName = "";
 	}
